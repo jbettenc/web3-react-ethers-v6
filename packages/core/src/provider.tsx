@@ -1,6 +1,7 @@
-import type { Networkish } from '@ethersproject/networks'
-import type { BaseProvider, Web3Provider } from '@ethersproject/providers'
+/* eslint-disable @typescript-eslint/no-restricted-imports */
 import type { Connector, Web3ReactStore } from '@web3-react/types'
+import type { Networkish } from 'ethers'
+import type { AbstractProvider, BrowserProvider } from 'ethers'
 import type { Context, MutableRefObject, ReactNode } from 'react'
 import React, { createContext, useContext, useRef } from 'react'
 
@@ -12,7 +13,7 @@ import { getPriorityConnector } from './hooks'
  * is using `connector.customProvider`, in which case it must match every possible type of this
  * property, over all connectors.
  */
-export type Web3ContextType<T extends BaseProvider = Web3Provider> = {
+export type Web3ContextType<T extends AbstractProvider = BrowserProvider> = {
   connector: Connector
   chainId: ReturnType<Web3ReactPriorityHooks['useSelectedChainId']>
   accounts: ReturnType<Web3ReactPriorityHooks['useSelectedAccounts']>
@@ -87,7 +88,7 @@ export function Web3ReactProvider({
   const isActivating = useSelectedIsActivating(connector)
   const account = useSelectedAccount(connector)
   const isActive = useSelectedIsActive(connector)
-  // note that we've omitted a <T extends BaseProvider = Web3Provider> generic type
+  // note that we've omitted a <T extends BaseProvider = BrowserProvider> generic type
   // in Web3ReactProvider, and thus can't pass T through to useSelectedProvider below.
   // this is because if we did so, the type of provider would include T, but that would
   // conflict because Web3Context can't take a generic. however, this isn't particularly
@@ -116,7 +117,7 @@ export function Web3ReactProvider({
   )
 }
 
-export function useWeb3React<T extends BaseProvider = Web3Provider>(): Web3ContextType<T> {
+export function useWeb3React<T extends AbstractProvider = BrowserProvider>(): Web3ContextType<T> {
   const context = useContext(Web3Context as Context<Web3ContextType<T> | undefined>)
   if (!context) throw Error('useWeb3React can only be used within the Web3ReactProvider component')
   return context

@@ -1,17 +1,20 @@
-import type { Networkish } from '@ethersproject/networks'
-import type { BaseProvider, Web3Provider } from '@ethersproject/providers'
+/* eslint-disable @typescript-eslint/no-restricted-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable unused-imports/no-unused-imports */
 import { createWeb3ReactStoreAndActions } from '@web3-react/store'
 import type { Actions, Connector, Web3ReactState, Web3ReactStore } from '@web3-react/types'
+import type { Networkish } from 'ethers'
+import type { AbstractProvider, BrowserProvider } from 'ethers'
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from 'zustand'
 import { useStoreWithEqualityFn } from 'zustand/traditional'
 
-let DynamicProvider: typeof Web3Provider | null | undefined
+let DynamicProvider: typeof BrowserProvider | null | undefined
 async function importProvider(): Promise<void> {
   if (DynamicProvider === undefined) {
     try {
-      const { Web3Provider } = await import('@ethersproject/providers')
-      DynamicProvider = Web3Provider
+      const { BrowserProvider } = await import('ethers')
+      DynamicProvider = BrowserProvider
     } catch {
       console.debug('@ethersproject/providers not available')
       DynamicProvider = null
@@ -110,7 +113,7 @@ export function getSelectedConnector(
    * getSelectedConnector is using `connector.customProvider`, in which case it must match every possible type of this
    * property, over all connectors.
    */
-  function useSelectedProvider<T extends BaseProvider = Web3Provider>(
+  function useSelectedProvider<T extends AbstractProvider = BrowserProvider>(
     connector: Connector,
     network?: Networkish
   ): T | undefined {
@@ -120,7 +123,7 @@ export function getSelectedConnector(
     return values[index]
   }
 
-  function useSelectedENSNames(connector: Connector, provider?: BaseProvider) {
+  function useSelectedENSNames(connector: Connector, provider?: AbstractProvider) {
     const index = getIndex(connector)
     const values = initializedConnectors.map(([, { useENSNames }], i) =>
       // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -129,7 +132,7 @@ export function getSelectedConnector(
     return values[index]
   }
 
-  function useSelectedENSName(connector: Connector, provider?: BaseProvider) {
+  function useSelectedENSName(connector: Connector, provider?: AbstractProvider) {
     const index = getIndex(connector)
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const values = initializedConnectors.map(([, { useENSName }], i) => useENSName(i === index ? provider : undefined))
@@ -207,15 +210,15 @@ export function getPriorityConnector(
    * getPriorityConnector is using `connector.customProvider`, in which case it must match every possible type of this
    * property, over all connectors.
    */
-  function usePriorityProvider<T extends BaseProvider = Web3Provider>(network?: Networkish) {
+  function usePriorityProvider<T extends AbstractProvider = BrowserProvider>(network?: Networkish) {
     return useSelectedProvider<T>(usePriorityConnector(), network)
   }
 
-  function usePriorityENSNames(provider?: BaseProvider) {
+  function usePriorityENSNames(provider?: AbstractProvider) {
     return useSelectedENSNames(usePriorityConnector(), provider)
   }
 
-  function usePriorityENSName(provider?: BaseProvider) {
+  function usePriorityENSName(provider?: AbstractProvider) {
     return useSelectedENSName(usePriorityConnector(), provider)
   }
 
@@ -296,7 +299,7 @@ function getDerivedHooks({ useChainId, useAccounts, useIsActivating }: ReturnTyp
  * indicated that names cannot be fetched because there's no provider, or they're in the process of being fetched,
  * or `string | null`, depending on whether an ENS name has been set for the account in question or not.
  */
-function useENS(provider?: BaseProvider, accounts: string[] = []): undefined[] | (string | null)[] {
+function useENS(provider?: AbstractProvider, accounts: string[] = []): undefined[] | (string | null)[] {
   const [ENSNames, setENSNames] = useState<(string | null)[] | undefined>()
 
   useEffect(() => {
@@ -332,14 +335,17 @@ function getAugmentedHooks<T extends Connector>(
   /**
    * Avoid type erasure by returning the most qualified type if not otherwise set.
    * Note that this function's return type is `T | undefined`, but there is a code path
-   * that returns a Web3Provider, which could conflict with a user-provided T. So,
+   * that returns a BrowserProvider, which could conflict with a user-provided T. So,
    * it's important that users only provide an override for T if they know that
    * `connector.customProvider` is going to be defined and of type T.
    *
    * @typeParam T - A type argument must only be provided if using `connector.customProvider`, in which case it
    * must match the type of this property.
    */
-  function useProvider<T extends BaseProvider = Web3Provider>(network?: Networkish, enabled = true): T | undefined {
+  function useProvider<T extends AbstractProvider = BrowserProvider>(
+    network?: Networkish,
+    enabled = true
+  ): T | undefined {
     const isActive = useIsActive()
     const chainId = useChainId()
 
@@ -369,12 +375,12 @@ function getAugmentedHooks<T extends Connector>(
     }, [loaded, enabled, isActive, chainId, network])
   }
 
-  function useENSNames(provider?: BaseProvider): undefined[] | (string | null)[] {
+  function useENSNames(provider?: AbstractProvider): undefined[] | (string | null)[] {
     const accounts = useAccounts()
     return useENS(provider, accounts)
   }
 
-  function useENSName(provider?: BaseProvider): undefined | string | null {
+  function useENSName(provider?: AbstractProvider): undefined | string | null {
     const account = useAccount()
     const accounts = useMemo(() => (account === undefined ? undefined : [account]), [account])
     return useENS(provider, accounts)?.[0]
